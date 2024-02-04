@@ -28,6 +28,7 @@ import (
 	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/snapshots"
+	"github.com/containerd/containerd/snapshots/storage"
 	"github.com/opencontainers/go-digest"
 	"github.com/opencontainers/image-spec/identity"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -125,6 +126,11 @@ func applyLayers(ctx context.Context, layers []Layer, chain []digest.Digest, sn 
 		key = fmt.Sprintf(snapshots.UnpackKeyFormat, uniquePart(), chainID)
 
 		// Prepare snapshot with from parent, label as root
+		log.G(ctx).Infof("!!! call sn.Prepare(). key: %s, parent: %s", key, parent.String())
+		if _, info, _, err := storage.GetInfo(ctx, key); err == nil {
+			info.Labels["containerd.io/snapshot/overlaybd/convert2turbo-oci"] = "true"
+			storage.UpdateInfo(ctx, info)
+		}
 		mounts, err = sn.Prepare(ctx, key, parent.String(), opts...)
 		if err != nil {
 			if errdefs.IsNotFound(err) && len(layers) > 1 {

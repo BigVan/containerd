@@ -20,6 +20,9 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"os"
+	"path"
+	"strings"
 	"time"
 
 	"github.com/containerd/containerd/content"
@@ -93,7 +96,18 @@ func (s *fsApplier) Apply(ctx context.Context, desc ocispec.Descriptor, mounts [
 		r: io.TeeReader(processor, digester.Hash()),
 	}
 
-	if err := apply(ctx, mounts, rc); err != nil {
+	log.G(ctx).Infof("!!! apply to %+v", mounts)
+	snDir := path.Dir(mounts[0].Source)
+	if strings.HasSuffix(snDir, "block") {
+		snDir = path.Dir(snDir)
+	}
+	layerBlob := path.Join(snDir, "layer.tar")
+	lb, _ := os.Create(layerBlob)
+	io.Copy(lb, rc)
+	lb.Close()
+	log.G(ctx).Infof("save layer blob: %s", layerBlob)
+	f, _ := os.Open(layerBlob)
+	if err := apply(ctx, mounts, f); err != nil {
 		return emptyDesc, err
 	}
 

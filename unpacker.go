@@ -35,6 +35,7 @@ import (
 	"github.com/containerd/containerd/pkg/kmutex"
 	"github.com/containerd/containerd/platforms"
 	"github.com/containerd/containerd/snapshots"
+	"github.com/containerd/containerd/snapshots/storage"
 	"github.com/opencontainers/go-digest"
 	"github.com/opencontainers/image-spec/identity"
 	ocispec "github.com/opencontainers/image-spec/specs-go/v1"
@@ -165,6 +166,11 @@ func (u *unpacker) unpack(
 		for try := 1; try <= 3; try++ {
 			// Prepare snapshot with from parent, label as root
 			key = fmt.Sprintf(snapshots.UnpackKeyFormat, uniquePart(), chainID)
+			log.G(ctx).Infof("!!! call sn.Prepare(). key: %s, parent: %s", key, parent.String())
+			if _, info, _, err := storage.GetInfo(ctx, key); err == nil {
+				info.Labels["containerd.io/snapshot/overlaybd/convert2turbo-oci"] = "true"
+				storage.UpdateInfo(ctx, info)
+			}
 			mounts, err = sn.Prepare(ctx, key, parent.String(), opts...)
 			if err != nil {
 				if errdefs.IsAlreadyExists(err) {

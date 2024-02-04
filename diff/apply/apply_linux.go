@@ -24,6 +24,7 @@ import (
 
 	"github.com/containerd/containerd/archive"
 	"github.com/containerd/containerd/errdefs"
+	"github.com/containerd/containerd/log"
 	"github.com/containerd/containerd/mount"
 	"github.com/containerd/containerd/pkg/userns"
 )
@@ -49,6 +50,7 @@ func apply(ctx context.Context, mounts []mount.Mount, r io.Reader) error {
 		if len(parents) > 0 {
 			opts = append(opts, archive.WithParents(parents))
 		}
+		log.G(ctx).Infof("apply in %s", path)
 		_, err = archive.Apply(ctx, path, r, opts...)
 		return err
 	case len(mounts) == 1 && mounts[0].Type == "aufs":

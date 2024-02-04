@@ -150,6 +150,7 @@ func Apply(ctx context.Context, root string, r io.Reader, opts ...ApplyOpt) (int
 // applying each file as either a whole file or whiteout.
 // See https://github.com/opencontainers/image-spec/blob/main/layer.md#applying-changesets
 func applyNaive(ctx context.Context, root string, r io.Reader, options ApplyOptions) (size int64, err error) {
+
 	var (
 		dirs []*tar.Header
 
